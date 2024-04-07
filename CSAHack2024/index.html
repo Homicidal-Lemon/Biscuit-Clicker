@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tea Biscuit Clicker</title>
+  <link rel="icon" type="image/x-icon" href="/images/tea_biscuit.png">
+  <style>
+    .hidden {
+      display: none;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+
+    img {
+      position: sticky;
+    }
+
+    .container {
+      margin-top: 50px;
+      position: relative;
+      border: 1px solid black;
+    }
+
+    #biscuitImage {
+      width: 200px;
+      height: auto;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    #biscuitCount {
+      font-size: 24px;
+      margin-top: 20px;
+    }
+
+    .button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .buyButton {
+      background-color: green;
+    }
+
+    .buyButton.insufficient {
+      background-color: gray;
+    }
+
+    @keyframes dropAnimation {
+      0% {
+        transform: translateY(-100%);
+        opacity: 1;
+      }
+
+      100% {
+        transform: translateY(2000%);
+        opacity: 0;
+      }
+    }
+
+    .fallingBiscuit {
+      position: absolute;
+      top: -50px;
+      left: 0;
+      height: auto;
+      animation: dropAnimation 2s ease forwards;
+      z-index: -100; /* Layered behind the buttons */
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Tea Biscuit Clicker</h1>
+    <p id="biscuitRate">Totally different to Cookie Clicker!</p>
+    <img id="biscuitImage" src="images/tea_biscuit.png" onclick="incrementBiscuitCount(true,0,playerYield);createFallingBiscuit('tea_biscuit.png'); ">
+    <p id="biscuitCount">Click the Tea Biscuit to begin</p>
+    <button id="hireBakerButton" class="button buyButton insufficient" onclick="hireBaker()">Hire Baker #1 (10 TB)</button>
+    <button id="buyBakeryButton" class="button buyButton insufficient" onclick="buyBakery()">Open Bakery #1 (500
+      TB)</button>
+    <button id="buyFactoryButton" class="button buyButton hidden" onclick="buyFactory()">Open Factory #1 (1000
+      TB)</button>
+    <button id="buyChurchButton" class="button buyButton hidden" onclick="buyChurch()">Open Church #1 (5000
+      TB)</button>
+    <br><br>
+    <button id="buyMultiplierButton" class="button buyButton insufficient" onclick="buyBiscuitMultiplier()">Buy Personal Multiplier x2 (100 TB)</button>
+    <button id="hireBakerMultiplierButton" class="button buyButton hidden" onclick="hireBakerMultiplier()">Buy Baker Multiplier x2 (300 TB)</button>
+    <button id="buyBakeryMultiplierButton" class="button buyButton hidden" onclick="buyBakeryMultiplier()">Buy Bakery Multiplier x2 (5000 TB)</button>
+    <button id="buyFactoryMultiplierButton" class="button buyButton hidden" onclick="buyFactoryMultiplier()">Buy Factory Multiplier x2 (20000 TB)</button>
+    <button id="buyChurchMultiplierButton" class="button buyButton hidden" onclick="buyChurchMultiplier()">Buy Church Multiplier x2 (100000 TB)</button>
+    <br><br>
+    
+
+  </div>
+  <div class="upgrades">
+    <button id ="playerUpgrade" class="button buyButton insufficient hidden" onclick ="yieldUpgrade(playerUpgradeCost,'playerUpgrade')"'></button>
+    <button id ="bakerUpgrade" class="button buyButton insufficient hidden" onclick="yieldUpgrade(bakerUpgradeCost, 'bakerUpgrade')"></button>
+    <button id ="bakeryUpgrade" class="button buyButton insufficient hidden" onclick="yieldUpgrade(bakeryUpgradeCost, 'bakeryUpgrade')"></button>
+    <button id ="factoryUpgrade" class="button buyButton insufficient hidden" onclick="yieldUpgrade(factoryUpgradeCost, 'factoryUpgrade')"></button>
+    <button id ="churchUpgrade" class="button buyButton insufficient hidden" onclick="yieldUpgrade(churchUpgradeCost, 'churchUpgrade')"></button>
+  </div>
+  <script>
+    let biscuitCount = 9;
+    let rotationAngle = 0;
+
+    let biscuitMultiplierCount = 0; let playerMultiplierCost = 100; playerYield = 1; // For the player clicking
+    let playerUpgradeCost = 1000;
+    let bakerCount = 0; let bakerCost = 10; let bakerYield = 1;
+    let bakerMultiplierCount = 0; let bakerMultiplierCost = 300;
+    let bakerUpgradeCost = 1000;
+    
+    let bakeryCount = 0; let bakeryCost = 500; let bakeryYield = 5;
+    let bakeryMultiplierCount = 0; let bakeryMultiplierCost = 5000;
+    let bakeryUpgradeCost = 5000;
+    
+    let factoryCount = 0; let factoryCost = 1000; let factoryYield = 25;
+    let factoryMultiplierCount = 0; let factoryMultiplierCost = 20000;
+    let factoryUpgradeCost = 20000;
+    
+    let churchCount = 0; let churchCost = 5000; let churchYield = 50;
+    let churchMultiplierCount = 0; let churchMultiplierCost = 100000;
+    let churchUpgradeCost = 50000;
+
+    let combatCost = 1000;
+    
+    let boss1hp = 10000000; let boss1damage = 1000;
+    
+    function incrementBiscuitCount(playerInput, multiplier, yields) {
+      if (playerInput) {
+        biscuitCount += (yields*getBiscuitMultiplier());
+        rotateBiscuitImage();
+      }
+      else { // base refering to the base value, multiplier is the count
+        biscuitCount += (yields * (multiplier + 1));
+      }
+
+      updateBuyButtons();
+
+      const biscuitImage = document.getElementById('biscuitImage');
+      biscuitImage.classList.add('biscuitClicked');
+    }
+
+    function rotateBiscuitImage() {
+      const multiplier = getBiscuitMultiplier();
+      rotationAngle += 1 * multiplier; // Scale rotation with multiplier
+      document.getElementById("biscuitImage").style.transform = `rotate(${rotationAngle}deg)`;
+    }
+
+    function createFallingBiscuit(imgName) {
+      const newBiscuit = document.createElement('img');
+      newBiscuit.src = ('images/' + imgName);
+      newBiscuit.className = 'fallingBiscuit';
+
+      newBiscuit.style.left = `${Math.random() * (window.innerWidth - 50)}px`;
+      newBiscuit.style.width = `${50 * (0.8 + 0.4 * Math.random())}px`;
+
+      document.querySelector('.container').appendChild(newBiscuit);
+
+      setTimeout(() => {
+        newBiscuit.remove();
+      }, 2000);
+    }
+
+    function autoIncrementBiscuitCount(interval, imgName) {
+      setInterval(() => {
+        switch (imgName) {
+          case 'tea_biscuit_green.jpg': incrementBiscuitCount(false, bakerMultiplierCount, bakerYield); break
+          case 'tea_biscuit_blue.png': incrementBiscuitCount(false, bakeryMultiplierCount, bakeryYield); break
+          case 'tea_biscuit_red.png': incrementBiscuitCount(false, factoryMultiplierCount, factoryYield); break
+          case 'tea_biscuit_holy.png': incrementBiscuitCount(false, churchMultiplierCount, churchYield); break
+          default: console.log("uh oh")
+        }
+        createFallingBiscuit(imgName);
+      }, interval);
+    }
+
+    function hireBaker() {
+      if (biscuitCount >= bakerCost) {
+        autoIncrementBiscuitCount(1000, 'tea_biscuit_green.jpg'); // One Biscuit every second
+        biscuitCount -= bakerCost; bakerCount++; bakerCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('hireBakerButton').classList.add('insufficient');
+      }
+    }
+
+    function buyBakery() {
+      if (biscuitCount >= bakeryCost) {
+        autoIncrementBiscuitCount(500, 'tea_biscuit_blue.png'); // One Biscuit every 0.5 seconds
+        biscuitCount -= bakeryCost; bakeryCount++; bakeryCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('hireBakerButton').classList.add('insufficient');
+      }
+    }
+
+    function buyFactory() {
+      if (biscuitCount >= factoryCost) {
+        autoIncrementBiscuitCount(200, 'tea_biscuit_red.png'); // One Biscuit every 0.2 seconds
+        biscuitCount -= factoryCost; factoryCount++; factoryCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('').classList.add('insufficient');
+      }
+    }
+
+    function buyChurch() {
+      if (biscuitCount >= churchCost) {
+        autoIncrementBiscuitCount(100, 'tea_biscuit_holy.png'); // One Biscuit every 0.1 seconds
+        biscuitCount -= churchCost; churchCount++; churchCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('').classList.add('insufficient');
+      }
+    }
+    
+    function buyBiscuitMultiplier() {
+      if (biscuitCount >= playerMultiplierCost) {
+        biscuitCount -= playerMultiplierCost;
+        biscuitMultiplierCount++; playerMultiplierCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('buyMultiplierButton').classList.add('insufficient');
+      }
+    }
+
+    function hireBakerMultiplier() {
+      if (biscuitCount >= bakerMultiplierCost) {
+        biscuitCount -= bakerMultiplierCost;
+        bakerMultiplierCount++; bakerMultiplierCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('hireBakerMultiplierButton').classList.add('insufficient');
+      }
+    }
+
+    function buyBakeryMultiplier() {
+      if (biscuitCount >= bakeryMultiplierCost) {
+        biscuitCount -= bakeryMultiplierCost;
+        bakeryMultiplierCount++; bakeryMultiplierCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('hireBakerMultiplierButton').classList.add('insufficient');
+      }
+    }
+
+    function buyFactoryMultiplier() {
+      if (biscuitCount >= factoryMultiplierCost) {
+        biscuitCount -= factoryMultiplierCost;
+        factoryMultiplierCount++; factoryMultiplierCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('hireBakerMultiplierButton').classList.add('insufficient');
+      }
+    }
+
+    function buyChurchMultiplier() {
+      if (biscuitCount >= churchMultiplierCost) {
+        biscuitCount -= churchMultiplierCost;
+        churchMultiplierCount++; churchMultiplierCost *= 2;
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById('hireBakerMultiplierButton').classList.add('insufficient');
+      }
+    }
+
+    function yieldUpgrade(upgradeCost, id) {
+    if (biscuitCount >= upgradeCost) {
+        biscuitCount -= upgradeCost;
+        switch(id) {
+          case 'playerUpgrade': playerYield += 1; playerUpgradeCost *= 10; break;
+          case 'bakerUpgrade': bakerYield += 1; bakerUpgradeCost *= 10; break;
+          case 'bakeryUpgrade': bakeryYield += 3; bakeryUpgradeCost *= 10; break;
+          case 'factoryUpgrade': factoryYield += 10; factoryUpgradeCost *= 10;break;
+          case 'churchUpgrade': churchYield += 20; churchUpgradeCost *= 10;break;
+          default: console.log('uh oh')
+        }
+        updateBuyButtons();
+      } else {
+        alert("Not enough biscuits!");
+        document.getElementById(id).classList.add('insufficient');
+      }
+    }
+    
+    function updateBuyButtons() {
+      document.getElementById('biscuitCount').textContent = `Tea Biscuits: ${biscuitCount}`;
+      document.getElementById('biscuitRate').textContent = `B/s: ${calculateBiscuitRate()}`;
+      
+      //// Update Hire Baker Button ////
+      const hireBakerButton = document.getElementById('hireBakerButton');
+      hireBakerButton.textContent = `Hire Baker #${bakerCount + 1} (${bakerCost} TB)`;
+      if (biscuitCount >= bakerCost) {hireBakerButton.classList.remove('insufficient');}
+      else {hireBakerButton.classList.add('insufficient');}
+
+      //// Update Buy Bakery Button ////
+      const buyBakeryButton = document.getElementById('buyBakeryButton');
+      buyBakeryButton.textContent = `Open Bakery #${bakeryCount + 1} (${bakeryCost} TB)`;
+      if (biscuitCount >= bakeryCost) {buyBakeryButton.classList.remove('insufficient');}
+      else {buyBakeryButton.classList.add('insufficient');}
+
+      //// Update Buy Factory Button ////
+      const buyFactoryButton = document.getElementById('buyFactoryButton');
+      buyFactoryButton.textContent = `Open Factory #${factoryCount + 1} (${factoryCost} TB)`;
+      if (biscuitCount >= factoryCost) {buyFactoryButton.classList.remove('insufficient');}
+      else {buyFactoryButton.classList.add('insufficient');}
+
+      //// Update Buy Church Button ////
+      const buyChurchButton = document.getElementById('buyChurchButton');
+      buyChurchButton.textContent = `Open Church #${churchCount + 1} (${churchCost} TB)`;
+      if (biscuitCount >= churchCost) {buyChurchButton.classList.remove('insufficient');}
+      else {buyChurchButton.classList.add('insufficient');}
+
+
+      //// Update Buy Multiplier Button ////
+      const buyMultiplierButton = document.getElementById('buyMultiplierButton');
+      buyMultiplierButton.textContent = `Buy Personal Multiplier x${biscuitMultiplierCount + 2} (${playerMultiplierCost} TB)`;
+      if (biscuitCount >= playerMultiplierCost) {buyMultiplierButton.classList.remove('insufficient');}
+      else {buyMultiplierButton.classList.add('insufficient');}
+
+      //// Update Baker Multiplier Button ////
+      const hireBakerMultiplierButton = document.getElementById('hireBakerMultiplierButton')
+      hireBakerMultiplierButton.textContent = `Buy Baker Multiplier x${bakerMultiplierCount + 2} (${bakerMultiplierCost} TB)`;
+      if (biscuitCount >= bakerMultiplierCost) {hireBakerMultiplierButton.classList.remove('insufficient');}
+      else {hireBakerMultiplierButton.classList.add('insufficient');}
+
+      //// Update Bakery Multiplier Button ////
+      const buyBakeryMultiplierButton = document.getElementById('buyBakeryMultiplierButton')
+      buyBakeryMultiplierButton.textContent = `Buy Bakery Multiplier x${bakeryMultiplierCount + 2} (${bakeryMultiplierCost} TB)`;
+      if (biscuitCount >= bakeryMultiplierCost) {buyBakeryMultiplierButton.classList.remove('insufficient');}
+      else {buyBakeryMultiplierButton.classList.add('insufficient');}
+
+      //// Update Factory Multiplier Button ////
+      const buyFactoryMultiplierButton = document.getElementById('buyFactoryMultiplierButton')
+      buyFactoryMultiplierButton.textContent = `Buy Factory Multiplier x${factoryMultiplierCount + 2} (${factoryMultiplierCost} TB)`;
+      if (biscuitCount >= factoryMultiplierCost) {buyFactoryMultiplierButton.classList.remove('insufficient');}
+      else {buyFactoryMultiplierButton.classList.add('insufficient');}
+
+      //// Update Church Multiplier Button ////
+      const buyChurchMultiplierButton = document.getElementById('buyChurchMultiplierButton')
+      buyChurchMultiplierButton.textContent = `Buy Church Multiplier x${churchMultiplierCount + 2} (${churchMultiplierCost} TB)`;
+      if (biscuitCount >= churchMultiplierCost) {buyChurchMultiplierButton.classList.remove('insufficient');}
+      else {buyChurchMultiplierButton.classList.add('insufficient');}
+
+
+      //// Update Player Base Yield Button ////
+      const playerUpgradeButton = document.getElementById('playerUpgrade')
+      playerUpgradeButton.textContent = `Upgrade Personal Clicks +${playerYield} (${playerUpgradeCost} TB)`;
+      if (biscuitCount >= playerUpgradeCost) {playerUpgradeButton.classList.remove('insufficient');}
+      else {playerUpgradeButton.classList.add('insufficient');}
+
+      //// Update Baker Base Yield Button ////
+      const bakerUpgradeButton = document.getElementById('bakerUpgrade')
+      bakerUpgradeButton.textContent = `Upgrade Baker Production +${bakerYield} (${bakerUpgradeCost} TB)`;
+      if (biscuitCount >= bakerUpgradeCost) {bakerUpgradeButton.classList.remove('insufficient');}
+      else {bakerUpgradeButton.classList.add('insufficient');}
+
+      //// Update Bakery Base Yield Button ////
+      const bakeryUpgradeButton = document.getElementById('bakeryUpgrade')
+      bakeryUpgradeButton.textContent = `Upgrade Bakery Production +${bakeryYield} (${bakeryUpgradeCost} TB)`;
+      if (biscuitCount >= bakeryUpgradeCost) {bakeryUpgradeButton.classList.remove('insufficient');}
+      else {bakeryUpgradeButton.classList.add('insufficient');}
+
+      //// Update Factory Base Yield Button ////
+      const factoryUpgradeButton = document.getElementById('factoryUpgrade')
+      factoryUpgradeButton.textContent = `Upgrade Factory Production +${factoryYield} (${factoryUpgradeCost} TB)`;
+      if (biscuitCount >= factoryUpgradeCost) {factoryUpgradeButton.classList.remove('insufficient');}
+      else {factoryUpgradeButton.classList.add('insufficient');}
+
+      //// Update Church Base Yield Button ////
+      const churchUpgradeButton = document.getElementById('churchUpgrade')
+      churchUpgradeButton.textContent = `Upgrade Church Production +${churchYield} (${churchUpgradeCost} TB)`;
+      if (biscuitCount >= churchUpgradeCost) {churchUpgradeButton.classList.remove('insufficient');}
+      else {churchUpgradeButton.classList.add('insufficient');}
+      
+      // Hidden buttons that appear when reaching certain thresholds //
+      if (biscuitCount >= playerMultiplierCost) {hireBakerMultiplierButton.classList.remove('hidden');}
+      if (biscuitCount >= bakeryCost) {buyFactoryButton.classList.remove('hidden');}
+      if (biscuitCount >= factoryCost) {buyChurchButton.classList.remove('hidden');}
+      
+      if (biscuitCount >= bakeryCost) {buyBakeryMultiplierButton.classList.remove('hidden');}
+      if (biscuitCount >= factoryCost) {buyFactoryMultiplierButton.classList.remove('hidden');}
+      if (biscuitCount >= churchCost) {buyChurchMultiplierButton.classList.remove('hidden');}
+
+      if (factoryCount >= 1) {playerUpgrade.classList.remove('hidden');}
+      if (factoryCount >= 1) {bakerUpgrade.classList.remove('hidden');}
+      if (factoryCount >= 1) {bakeryUpgrade.classList.remove('hidden');}
+      if (factoryCount >= 1) {factoryUpgrade.classList.remove('hidden');}
+      if (factoryCount >= 1 && biscuitCount >= churchCost) {churchUpgrade.classList.remove('hidden');}
+    }
+
+    function getBiscuitMultiplier() {
+      return 1 + biscuitMultiplierCount; // Return the biscuit multiplier value
+    }
+
+    function calculateBiscuitRate() {
+      bakerRate = (bakerYield * bakerCount * (bakerMultiplierCount + 1));
+      bakeryRate = (bakeryYield * bakeryCount * (bakeryMultiplierCount + 1) * 2);
+      factoryRate = (factoryYield * factoryCount * (factoryMultiplierCount + 1) * 5);
+      churchRate = (churchYield * churchCount * (churchMultiplierCount + 1) * 10);
+      return bakerRate + bakeryRate + factoryRate + churchRate;
+    }
+
+  </script>
+</body>
+</html>
